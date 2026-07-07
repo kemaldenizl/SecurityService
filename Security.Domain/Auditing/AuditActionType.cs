@@ -25,5 +25,10 @@ public enum AuditActionType
     MfaLoginCompleted = 21,
     MfaRecoveryCodeUsed = 22,
     MfaDisabled = 23,
-    RecoveryCodesRegenerated = 24
+    RecoveryCodesRegenerated = 24,
+    RoleCreated = 25,
+    RoleRenamed = 26,
+    RoleDeleted = 27,
+    PermissionCreated = 28,
+    PermissionDeleted = 29
 }
