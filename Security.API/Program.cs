@@ -12,6 +12,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Security.API.ProblemDetails;
 using Serilog;
 using Serilog.Events;
+using Swashbuckle.AspNetCore.SwaggerUI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,6 +86,11 @@ app.UseSerilogRequestLogging();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "Security.API v1");
+        options.RoutePrefix = "swagger";
+    });
 }
 
 using (var scope = app.Services.CreateScope())
@@ -141,6 +147,8 @@ app.MapUserEndpoints();
 app.MapSessionEndpoints();
 app.MapTestEndpoints();
 app.MapMfaEndpoints();
+app.MapRoleEndpoints();
+app.MapPermissionEndpoints();
 
 app.Run();
 

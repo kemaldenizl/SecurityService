@@ -138,6 +138,17 @@ public static class RateLimitExtension
                         QueueLimit = rateLimitOptions.ResendVerification.QueueLimit,
                         AutoReplenishment = rateLimitOptions.ResendVerification.AutoReplenishment
                     }));
+
+            options.AddPolicy(RateLimitPolicyNames.Admin, httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: RateLimitPartitionKeys.ByAuthenticatedUserOrIp(httpContext, "admin"),
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = rateLimitOptions.Admin.PermitLimit,
+                        Window = TimeSpan.FromSeconds(rateLimitOptions.Admin.WindowSeconds),
+                        QueueLimit = rateLimitOptions.Admin.QueueLimit,
+                        AutoReplenishment = rateLimitOptions.Admin.AutoReplenishment
+                    }));
         });
 
         return services;

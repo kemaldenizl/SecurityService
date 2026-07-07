@@ -299,6 +299,48 @@ public static class ApplicationResultMapper
                     "Invalid MFA challenge",
                     result.Error.Description)),
 
+            "user.not_found" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status404NotFound,
+                    "User not found",
+                    result.Error.Description)),
+
+            "role.not_found" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status404NotFound,
+                    "Role not found",
+                    result.Error.Description)),
+
+            "role.already_exists" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status409Conflict,
+                    "Conflict",
+                    result.Error.Description)),
+
+            "role.permission_not_found" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status404NotFound,
+                    "Permission not found",
+                    result.Error.Description)),
+
+            "permission.not_found" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status404NotFound,
+                    "Permission not found",
+                    result.Error.Description)),
+
+            "permission.already_exists" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status409Conflict,
+                    "Conflict",
+                    result.Error.Description)),
+
+            "permission.in_use" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status409Conflict,
+                    "Conflict",
+                    result.Error.Description)),
+
             _ => httpContext.ToProblemResult(
                 httpContext.CreateProblemDetails(
                     StatusCodes.Status400BadRequest,

@@ -26,7 +26,7 @@ internal sealed class BearerSecuritySchemeTransformer(IAuthenticationSchemeProvi
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
             Name = "Authorization",
-            Description = "Enter: Bearer {your JWT access token}"
+            Description = "Paste just the JWT access token (without the \"Bearer \" prefix) - Swagger UI adds it automatically."
         };
 
         document.SecurityRequirements ??= new List<OpenApiSecurityRequirement>();
