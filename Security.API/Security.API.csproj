@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>a9c3f2d7-adcc-47ed-9e75-4a31e51fccdb</UserSecretsId>
+    <UserSecretsId>242f0e28-816c-4f73-ba07-d62f965a8e31</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +22,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
   </ItemGroup>
 
   <ItemGroup>
