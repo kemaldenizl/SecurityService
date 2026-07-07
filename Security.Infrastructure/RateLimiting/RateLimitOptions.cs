@@ -13,6 +13,7 @@ public sealed class RateLimitOptions
     public FixedWindowPolicyOptions ResetPassword { get; init; } = new();
     public FixedWindowPolicyOptions VerifyEmail { get; init; } = new();
     public FixedWindowPolicyOptions ResendVerification { get; init; } = new();
+    public FixedWindowPolicyOptions Admin { get; init; } = new();
 }
 
 public sealed class FixedWindowPolicyOptions

@@ -11,4 +11,5 @@ public static class RateLimitPolicyNames
     public const string ResetPassword = "rate-limit:reset-password";
     public const string VerifyEmail = "rate-limit:verify-email";
     public const string ResendVerification = "rate-limit:resend-verification";
+    public const string Admin = "rate-limit:admin";
 }
