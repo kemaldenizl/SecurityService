@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Security.Domain.Authorization;
 using Security.Domain.Auditing;
@@ -41,6 +42,10 @@ public sealed class SecurityDbContext : DbContext
         builder.HasDefaultSchema("security");
 
         builder.ApplyConfigurationsFromAssembly(typeof(SecurityDbContext).Assembly);
+
+        builder.AddInboxStateEntity();
+        builder.AddOutboxMessageEntity();
+        builder.AddOutboxStateEntity();
 
         builder.UseOpenIddict();
     }

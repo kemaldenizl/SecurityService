@@ -1,7 +1,7 @@
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Security.Application.Abstractions.Auditing;
-using Security.Application.Abstractions.Email;
+using Security.Application.Abstractions.Messaging;
+using Security.Application.Abstractions.Messaging.IntegrationEvents;
 using Security.Application.Abstractions.Persistence;
 using Security.Application.Abstractions.Security;
 using Security.Application.Abstractions.Time;
@@ -20,10 +20,9 @@ public sealed class ResendVerificationCommandHandler(
     IAuditLogRepository auditLogRepository,
     IAuditLogFactory auditLogFactory,
     IEmailVerificationTokenGenerator emailVerificationTokenGenerator,
-    IEmailSender emailSender,
+    IEventPublisher eventPublisher,
     IDateTimeProvider dateTimeProvider,
-    IUnitOfWork unitOfWork,
-    ILogger<ResendVerificationCommandHandler> logger)
+    IUnitOfWork unitOfWork)
     : IRequestHandler<ResendVerificationCommand, Result<ResendVerificationResponse>>
 {
     private static readonly TimeSpan VerificationTokenLifetime = TimeSpan.FromHours(24);
@@ -61,31 +60,16 @@ public sealed class ResendVerificationCommandHandler(
                 user.Id);
 
             await auditLogRepository.AddAsync(auditLog, cancellationToken);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            try
-            {
-                logger.LogInformation(
-                    "Sending email verification mail to user. UserId: {UserId}, Email: {Email}",
+            await eventPublisher.PublishAsync(
+                new EmailVerificationRequestedIntegrationEvent(
                     user.Id,
-                    user.Email);
-
-                logger.LogInformation(
-                    "Email verification token: {Token}",
-                    tokenPair.PlainTextToken);
-
-                await emailSender.SendEmailVerificationAsync(
                     user.Email,
                     tokenPair.PlainTextToken,
-                    cancellationToken);
-            }
-            catch (Exception exception)
-            {
-                logger.LogError(
-                    exception,
-                    "Email verification resend mail could not be sent. UserId: {UserId}",
-                    user.Id);
-            }
+                    utcNow),
+                cancellationToken);
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
         return Result<ResendVerificationResponse>.Success(

@@ -1,7 +1,7 @@
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Security.Application.Abstractions.Auditing;
-using Security.Application.Abstractions.Email;
+using Security.Application.Abstractions.Messaging;
+using Security.Application.Abstractions.Messaging.IntegrationEvents;
 using Security.Application.Abstractions.Persistence;
 using Security.Application.Abstractions.Security;
 using Security.Application.Abstractions.Time;
@@ -20,10 +20,9 @@ public sealed class ForgotPasswordCommandHandler(
     IAuditLogRepository auditLogRepository,
     IAuditLogFactory auditLogFactory,
     IPasswordResetTokenGenerator passwordResetTokenGenerator,
-    IEmailSender emailSender,
+    IEventPublisher eventPublisher,
     IDateTimeProvider dateTimeProvider,
-    IUnitOfWork unitOfWork,
-    ILogger<ForgotPasswordCommandHandler> logger)
+    IUnitOfWork unitOfWork)
     : IRequestHandler<ForgotPasswordCommand, Result<ForgotPasswordResponse>>
 {
     private static readonly TimeSpan PasswordResetTokenLifetime = TimeSpan.FromMinutes(30);
@@ -58,24 +57,16 @@ public sealed class ForgotPasswordCommandHandler(
                 user.Id);
 
             await auditLogRepository.AddAsync(auditLog, cancellationToken);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            try
-            {
-                await emailSender.SendPasswordResetAsync(
+            await eventPublisher.PublishAsync(
+                new PasswordResetRequestedIntegrationEvent(
+                    user.Id,
                     user.Email,
                     tokenPair.PlainTextToken,
-                    cancellationToken
-                );
-            }
-            catch (Exception exception)
-            {
-                logger.LogError(
-                    exception,
-                    "Password reset email could not be sent. UserId: {UserId}",
-                    user.Id
-                );
-            }
+                    utcNow),
+                cancellationToken);
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
         return Result<ForgotPasswordResponse>.Success(new ForgotPasswordResponse("If the account exists, a password reset link has been generated."));
