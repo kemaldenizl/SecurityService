@@ -54,6 +54,13 @@ public sealed class User : AggregateRoot
         PasswordHash = Guard.AgainstNullOrWhiteSpace(newPasswordHash, nameof(newPasswordHash));
     }
 
+    public void ChangeEmail(string email, string normalizedEmail)
+    {
+        Email = Guard.AgainstNullOrWhiteSpace(email, nameof(email));
+        NormalizedEmail = Guard.AgainstNullOrWhiteSpace(normalizedEmail, nameof(normalizedEmail));
+        EmailVerified = false;
+    }
+
     public void Deactivate()
     {
         IsActive = false;
