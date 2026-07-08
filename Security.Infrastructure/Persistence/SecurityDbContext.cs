@@ -22,6 +22,7 @@ public sealed class SecurityDbContext : DbContext
 
     public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<PasswordChangeToken> PasswordChangeTokens => Set<PasswordChangeToken>();
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
