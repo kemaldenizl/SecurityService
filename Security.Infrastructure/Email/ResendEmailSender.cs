@@ -69,6 +69,26 @@ public sealed class ResendEmailSender(IOptions<ResendEmailOptions> options) : IE
         });
     }
 
+    public async Task SendEmailChangeAsync(
+        string to,
+        string changeToken,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateOptions();
+
+        var changeUrl = BuildUrl(_options.ChangeEmailPath, changeToken);
+
+        IResend resend = ResendClient.Create(_options.ApiKey);
+
+        await resend.EmailSendAsync(new EmailMessage
+        {
+            From = BuildFrom(),
+            To = to,
+            Subject = "Confirm your email change",
+            HtmlBody = BuildEmailChangeHtml(changeUrl)
+        });
+    }
+
     private string BuildFrom()
     {
         return string.IsNullOrWhiteSpace(_options.FromName)
@@ -136,6 +156,26 @@ public sealed class ResendEmailSender(IOptions<ResendEmailOptions> options) : IE
             <p>
                 <a href="{{encodedUrl}}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px">
                     Confirm Password Change
+                </a>
+            </p>
+            <p>If the button does not work, copy and paste this link into your browser:</p>
+            <p><a href="{{encodedUrl}}">{{encodedUrl}}</a></p>
+            <p>If you did not request this, please secure your account and ignore this email.</p>
+        </div>
+        """;
+    }
+
+    private static string BuildEmailChangeHtml(string changeUrl)
+    {
+        var encodedUrl = WebUtility.HtmlEncode(changeUrl);
+
+        return $$"""
+        <div style="font-family:Arial,sans-serif;line-height:1.6">
+            <h2>Confirm your email change</h2>
+            <p>Click the button below to confirm changing your email address.</p>
+            <p>
+                <a href="{{encodedUrl}}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px">
+                    Confirm Email Change
                 </a>
             </p>
             <p>If the button does not work, copy and paste this link into your browser:</p>

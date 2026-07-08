@@ -15,6 +15,9 @@ using Security.Application.Auth.PasswordReset.ForgotPassword;
 using Security.Application.Auth.PasswordReset.ResetPassword;
 using Security.Application.Auth.PasswordChange.RequestPasswordChange;
 using Security.Application.Auth.PasswordChange.ConfirmPasswordChange;
+using Security.Application.Auth.EmailChange.RequestEmailChange;
+using Security.Application.Auth.EmailChange.ValidateEmailChange;
+using Security.Application.Auth.EmailChange.ConfirmEmailChange;
 using Security.Application.Auth.EmailVerification.ResendVerification;
 using Security.Application.Auth.EmailVerification.VerifyEmail;
 
@@ -133,6 +136,44 @@ public static class AuthEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .ProducesValidationProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .WithOpenApi();
+
+        group.MapPost("/change-email/request", RequestEmailChangeAsync)
+            .RequireRateLimiting(RateLimitPolicyNames.ChangeEmailRequest)
+            .RequireAuthorization()
+            .WithName("RequestEmailChange")
+            .WithSummary("Starts the authenticated email change flow.")
+            .WithDescription("Verifies the current password and emails a confirmation link to change the email address.")
+            .Accepts<RequestEmailChangeRequest>("application/json")
+            .Produces<Contracts.Auth.RequestEmailChangeResponse>(StatusCodes.Status202Accepted)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .WithOpenApi();
+
+        group.MapGet("/change-email/validate", ValidateEmailChangeAsync)
+            .RequireRateLimiting(RateLimitPolicyNames.ChangeEmailValidate)
+            .WithName("ValidateEmailChange")
+            .WithSummary("Validates an email change token.")
+            .WithDescription("Checks whether the email change token in the query string is valid, unused and not expired.")
+            .Produces<Contracts.Auth.ValidateEmailChangeResponse>(StatusCodes.Status200OK)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .WithOpenApi();
+
+        group.MapPost("/change-email/confirm", ConfirmEmailChangeAsync)
+            .RequireRateLimiting(RateLimitPolicyNames.ChangeEmailConfirm)
+            .WithName("ConfirmEmailChange")
+            .WithSummary("Completes the email change flow.")
+            .WithDescription("Validates the email change token and updates the user's email address.")
+            .Accepts<ConfirmEmailChangeRequest>("application/json")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status429TooManyRequests)
             .WithOpenApi();
 
@@ -289,6 +330,32 @@ public static class AuthEndpoints
     private static async Task<IResult> ConfirmPasswordChangeAsync(ConfirmPasswordChangeRequest request, HttpContext httpContext, ISender sender, CancellationToken cancellationToken)
     {
         var command = new ConfirmPasswordChangeCommand(request.Token, request.NewPassword);
+        var result = await sender.Send(command, cancellationToken);
+
+        return httpContext.ToApiResult(result);
+    }
+
+    private static async Task<IResult> RequestEmailChangeAsync(RequestEmailChangeRequest request, HttpContext httpContext, ISender sender, CancellationToken cancellationToken)
+    {
+        var currentUser = httpContext.User.ToCurrentUser();
+
+        var command = new RequestEmailChangeCommand(currentUser.UserId, request.CurrentPassword);
+        var result = await sender.Send(command, cancellationToken);
+
+        return httpContext.ToApiResult(result);
+    }
+
+    private static async Task<IResult> ValidateEmailChangeAsync(string? token, HttpContext httpContext, ISender sender, CancellationToken cancellationToken)
+    {
+        var query = new ValidateEmailChangeQuery(token ?? string.Empty);
+        var result = await sender.Send(query, cancellationToken);
+
+        return httpContext.ToApiResult(result);
+    }
+
+    private static async Task<IResult> ConfirmEmailChangeAsync(ConfirmEmailChangeRequest request, HttpContext httpContext, ISender sender, CancellationToken cancellationToken)
+    {
+        var command = new ConfirmEmailChangeCommand(request.Token, request.NewEmail);
         var result = await sender.Send(command, cancellationToken);
 
         return httpContext.ToApiResult(result);

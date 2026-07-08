@@ -139,6 +139,39 @@ public static class RateLimitExtension
                         AutoReplenishment = rateLimitOptions.ChangePasswordConfirm.AutoReplenishment
                     }));
 
+            options.AddPolicy(RateLimitPolicyNames.ChangeEmailRequest, httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: RateLimitPartitionKeys.ByAuthenticatedUserOrIp(httpContext, "change-email-request"),
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = rateLimitOptions.ChangeEmailRequest.PermitLimit,
+                        Window = TimeSpan.FromSeconds(rateLimitOptions.ChangeEmailRequest.WindowSeconds),
+                        QueueLimit = rateLimitOptions.ChangeEmailRequest.QueueLimit,
+                        AutoReplenishment = rateLimitOptions.ChangeEmailRequest.AutoReplenishment
+                    }));
+
+            options.AddPolicy(RateLimitPolicyNames.ChangeEmailValidate, httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: RateLimitPartitionKeys.ByIp(httpContext, "change-email-validate"),
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = rateLimitOptions.ChangeEmailValidate.PermitLimit,
+                        Window = TimeSpan.FromSeconds(rateLimitOptions.ChangeEmailValidate.WindowSeconds),
+                        QueueLimit = rateLimitOptions.ChangeEmailValidate.QueueLimit,
+                        AutoReplenishment = rateLimitOptions.ChangeEmailValidate.AutoReplenishment
+                    }));
+
+            options.AddPolicy(RateLimitPolicyNames.ChangeEmailConfirm, httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: RateLimitPartitionKeys.ByIp(httpContext, "change-email-confirm"),
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = rateLimitOptions.ChangeEmailConfirm.PermitLimit,
+                        Window = TimeSpan.FromSeconds(rateLimitOptions.ChangeEmailConfirm.WindowSeconds),
+                        QueueLimit = rateLimitOptions.ChangeEmailConfirm.QueueLimit,
+                        AutoReplenishment = rateLimitOptions.ChangeEmailConfirm.AutoReplenishment
+                    }));
+
             options.AddPolicy(RateLimitPolicyNames.VerifyEmail, httpContext =>
                 RateLimitPartition.GetFixedWindowLimiter(
                     partitionKey: RateLimitPartitionKeys.ByIp(httpContext, "verify-email"),

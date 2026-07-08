@@ -17,4 +17,6 @@ public sealed class ResendEmailOptions
     public string ResetPasswordPath { get; init; } = "/reset-password";
 
     public string ChangePasswordPath { get; init; } = "/change-password";
+
+    public string ChangeEmailPath { get; init; } = "/change-email";
 }
