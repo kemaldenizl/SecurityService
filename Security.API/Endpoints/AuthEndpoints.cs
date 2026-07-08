@@ -13,6 +13,8 @@ using Security.Application.Common.Results;
 using Security.Infrastructure.RateLimiting;
 using Security.Application.Auth.PasswordReset.ForgotPassword;
 using Security.Application.Auth.PasswordReset.ResetPassword;
+using Security.Application.Auth.PasswordChange.RequestPasswordChange;
+using Security.Application.Auth.PasswordChange.ConfirmPasswordChange;
 using Security.Application.Auth.EmailVerification.ResendVerification;
 using Security.Application.Auth.EmailVerification.VerifyEmail;
 
@@ -102,6 +104,32 @@ public static class AuthEndpoints
             .WithSummary("Completes the password reset flow.")
             .WithDescription("Validates the password reset token and changes the user's password.")
             .Accepts<ResetPasswordRequest>("application/json")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .WithOpenApi();
+
+        group.MapPost("/change-password/request", RequestPasswordChangeAsync)
+            .RequireRateLimiting(RateLimitPolicyNames.ChangePasswordRequest)
+            .RequireAuthorization()
+            .WithName("RequestPasswordChange")
+            .WithSummary("Starts the authenticated password change flow.")
+            .WithDescription("Verifies the current password and emails a confirmation link to change the password.")
+            .Accepts<RequestPasswordChangeRequest>("application/json")
+            .Produces<Contracts.Auth.RequestPasswordChangeResponse>(StatusCodes.Status202Accepted)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .WithOpenApi();
+
+        group.MapPost("/change-password/confirm", ConfirmPasswordChangeAsync)
+            .RequireRateLimiting(RateLimitPolicyNames.ChangePasswordConfirm)
+            .WithName("ConfirmPasswordChange")
+            .WithSummary("Completes the password change flow.")
+            .WithDescription("Validates the password change token and changes the user's password.")
+            .Accepts<ConfirmPasswordChangeRequest>("application/json")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesValidationProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status400BadRequest)
@@ -243,6 +271,24 @@ public static class AuthEndpoints
     private static async Task<IResult> ResetPasswordAsync(ResetPasswordRequest request, HttpContext httpContext, ISender sender, CancellationToken cancellationToken)
     {
         var command = new ResetPasswordCommand(request.Token, request.NewPassword);
+        var result = await sender.Send(command, cancellationToken);
+
+        return httpContext.ToApiResult(result);
+    }
+
+    private static async Task<IResult> RequestPasswordChangeAsync(RequestPasswordChangeRequest request, HttpContext httpContext, ISender sender, CancellationToken cancellationToken)
+    {
+        var currentUser = httpContext.User.ToCurrentUser();
+
+        var command = new RequestPasswordChangeCommand(currentUser.UserId, request.CurrentPassword);
+        var result = await sender.Send(command, cancellationToken);
+
+        return httpContext.ToApiResult(result);
+    }
+
+    private static async Task<IResult> ConfirmPasswordChangeAsync(ConfirmPasswordChangeRequest request, HttpContext httpContext, ISender sender, CancellationToken cancellationToken)
+    {
+        var command = new ConfirmPasswordChangeCommand(request.Token, request.NewPassword);
         var result = await sender.Send(command, cancellationToken);
 
         return httpContext.ToApiResult(result);
