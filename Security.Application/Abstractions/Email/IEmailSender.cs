@@ -11,4 +11,9 @@ public interface IEmailSender
         string to,
         string resetToken,
         CancellationToken cancellationToken = default);
+
+    Task SendPasswordChangeAsync(
+        string to,
+        string changeToken,
+        CancellationToken cancellationToken = default);
 }

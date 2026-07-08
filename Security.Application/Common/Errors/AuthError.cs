@@ -18,6 +18,10 @@ public static class AuthErrors
     public static readonly Error InvalidPasswordResetToken = new("auth.invalid_password_reset_token", "Password reset token is invalid.");
     public static readonly Error ExpiredPasswordResetToken = new("auth.expired_password_reset_token", "Password reset token is expired.");
     public static readonly Error UsedPasswordResetToken = new("auth.used_password_reset_token", "Password reset token has already been used.");
+    public static readonly Error InvalidCurrentPassword = new("auth.invalid_current_password", "Current password is incorrect.");
+    public static readonly Error InvalidPasswordChangeToken = new("auth.invalid_password_change_token", "Password change token is invalid.");
+    public static readonly Error ExpiredPasswordChangeToken = new("auth.expired_password_change_token", "Password change token is expired.");
+    public static readonly Error UsedPasswordChangeToken = new("auth.used_password_change_token", "Password change token has already been used.");
     public static readonly Error InvalidEmailVerificationToken = new("auth.invalid_email_verification_token", "Email verification token is invalid.");
     public static readonly Error ExpiredEmailVerificationToken = new("auth.expired_email_verification_token", "Email verification token is expired.");
     public static readonly Error UsedEmailVerificationToken = new("auth.used_email_verification_token", "Email verification token has already been used.");

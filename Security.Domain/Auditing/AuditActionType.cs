@@ -30,5 +30,7 @@ public enum AuditActionType
     RoleRenamed = 26,
     RoleDeleted = 27,
     PermissionCreated = 28,
-    PermissionDeleted = 29
+    PermissionDeleted = 29,
+    PasswordChangeRequested = 30,
+    PasswordChangeCompleted = 31
 }
