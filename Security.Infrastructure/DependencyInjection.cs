@@ -26,9 +26,9 @@ using Security.Application.Abstractions.RequestContext;
 using Security.Infrastructure.Auditing;
 using Security.Infrastructure.RequestContext;
 using Microsoft.AspNetCore.Mvc;
-using Security.Application.Abstractions.Email;
-using Security.Infrastructure.Email;
-using Resend;
+using MassTransit;
+using Security.Application.Abstractions.Messaging;
+using Security.Infrastructure.Messaging;
 
 namespace Security.Infrastructure;
 
@@ -277,22 +277,30 @@ public static class DependencyInjection
 
         services.AddDataProtection();
 
-        services.Configure<ResendEmailOptions>(configuration.GetSection(ResendEmailOptions.SectionName));
-        services.AddHttpClient<ResendClient>();
-        services.Configure<ResendClientOptions>(options =>
+        var rabbitMqOptions = configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()
+                              ?? throw new InvalidOperationException("RabbitMq configuration section is missing.");
+
+        services.AddMassTransit(x =>
         {
-            var apiKey = configuration["Resend:ApiKey"];
-
-            if (string.IsNullOrWhiteSpace(apiKey))
+            x.AddEntityFrameworkOutbox<SecurityDbContext>(outbox =>
             {
-                throw new InvalidOperationException("Resend:ApiKey is missing.");
-            }
+                outbox.UsePostgres();
+                outbox.UseBusOutbox();
+            });
 
-            options.ApiToken = apiKey;
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                cfg.Host(rabbitMqOptions.Host, rabbitMqOptions.VirtualHost, host =>
+                {
+                    host.Username(rabbitMqOptions.Username);
+                    host.Password(rabbitMqOptions.Password);
+                });
+
+                cfg.ConfigureEndpoints(context);
+            });
         });
 
-        services.AddTransient<IResend, ResendClient>();
-        services.AddScoped<IEmailSender, ResendEmailSender>();
+        services.AddScoped<IEventPublisher, MassTransitEventPublisher>();
 
         return services;
     }
