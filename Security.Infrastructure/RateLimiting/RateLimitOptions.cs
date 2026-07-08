@@ -11,6 +11,11 @@ public sealed class RateLimitOptions
     public FixedWindowPolicyOptions Sessions { get; init; } = new();
     public FixedWindowPolicyOptions ForgotPassword { get; init; } = new();
     public FixedWindowPolicyOptions ResetPassword { get; init; } = new();
+    public FixedWindowPolicyOptions ChangePasswordRequest { get; init; } = new();
+    public FixedWindowPolicyOptions ChangePasswordConfirm { get; init; } = new();
+    public FixedWindowPolicyOptions ChangeEmailRequest { get; init; } = new();
+    public FixedWindowPolicyOptions ChangeEmailValidate { get; init; } = new();
+    public FixedWindowPolicyOptions ChangeEmailConfirm { get; init; } = new();
     public FixedWindowPolicyOptions VerifyEmail { get; init; } = new();
     public FixedWindowPolicyOptions ResendVerification { get; init; } = new();
     public FixedWindowPolicyOptions Admin { get; init; } = new();

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Security.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Security.Infrastructure.Persistence;
 namespace Security.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SecurityDbContext))]
-    partial class SecurityDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260707162138_AddPasswordChangeTokens")]
+    partial class AddPasswordChangeTokens
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -499,46 +502,6 @@ namespace Security.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_refresh_tokens_session_state");
 
                     b.ToTable("refresh_tokens", "security");
-                });
-
-            modelBuilder.Entity("Security.Domain.Tokens.EmailChangeToken", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<bool>("Used")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("UsedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExpiresAtUtc")
-                        .HasDatabaseName("ix_email_change_tokens_expires_at_utc");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique()
-                        .HasDatabaseName("ix_email_change_tokens_token_hash");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_email_change_tokens_user_id");
-
-                    b.ToTable("email_change_tokens", "security");
                 });
 
             modelBuilder.Entity("Security.Domain.Tokens.EmailVerificationToken", b =>

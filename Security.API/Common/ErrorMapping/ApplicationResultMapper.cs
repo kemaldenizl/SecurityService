@@ -5,6 +5,9 @@ using AppLoginResponse = Security.Application.Auth.Login.LoginResponse;
 using AppRefreshTokenResponse = Security.Application.Auth.Refresh.RefreshTokenResponse;
 using AppRegisterResponse = Security.Application.Auth.Register.RegisterResponse;
 using AppForgotPasswordResponse = Security.Application.Auth.PasswordReset.Dtos.ForgotPasswordResponse;
+using AppRequestPasswordChangeResponse = Security.Application.Auth.PasswordChange.Dtos.RequestPasswordChangeResponse;
+using AppRequestEmailChangeResponse = Security.Application.Auth.EmailChange.Dtos.RequestEmailChangeResponse;
+using AppValidateEmailChangeResponse = Security.Application.Auth.EmailChange.Dtos.ValidateEmailChangeResponse;
 using AppResendVerificationResponse = Security.Application.Auth.EmailVerification.Dtos.ResendVerificationResponse;
 using AppBeginMfaSetupResponse = Security.Application.Auth.Mfa.Dtos.BeginMfaSetupResponse;
 using AppCompleteMfaSetupResponse = Security.Application.Auth.Mfa.Dtos.CompleteMfaSetupResponse;
@@ -32,6 +35,39 @@ public static class ApplicationResultMapper
         {
             var response = new Contracts.Auth.ForgotPasswordResponse(result.Value.Message);
             return Results.Accepted(value: response);
+        }
+
+        return MapFailure(httpContext, result);
+    }
+
+    public static IResult ToApiResult(this HttpContext httpContext, Result<AppRequestPasswordChangeResponse> result)
+    {
+        if (result.IsSuccess)
+        {
+            var response = new Contracts.Auth.RequestPasswordChangeResponse(result.Value.Message);
+            return Results.Accepted(value: response);
+        }
+
+        return MapFailure(httpContext, result);
+    }
+
+    public static IResult ToApiResult(this HttpContext httpContext, Result<AppRequestEmailChangeResponse> result)
+    {
+        if (result.IsSuccess)
+        {
+            var response = new Contracts.Auth.RequestEmailChangeResponse(result.Value.Message);
+            return Results.Accepted(value: response);
+        }
+
+        return MapFailure(httpContext, result);
+    }
+
+    public static IResult ToApiResult(this HttpContext httpContext, Result<AppValidateEmailChangeResponse> result)
+    {
+        if (result.IsSuccess)
+        {
+            var response = new Contracts.Auth.ValidateEmailChangeResponse(result.Value.IsValid, result.Value.Message);
+            return Results.Ok(response);
         }
 
         return MapFailure(httpContext, result);
@@ -249,6 +285,54 @@ public static class ApplicationResultMapper
                 httpContext.CreateProblemDetails(
                     StatusCodes.Status400BadRequest,
                     "Used password reset token",
+                    result.Error.Description)),
+
+            "auth.invalid_current_password" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status400BadRequest,
+                    "Invalid current password",
+                    result.Error.Description)),
+
+            "auth.invalid_password_change_token" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status400BadRequest,
+                    "Invalid password change token",
+                    result.Error.Description)),
+
+            "auth.expired_password_change_token" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status400BadRequest,
+                    "Expired password change token",
+                    result.Error.Description)),
+
+            "auth.used_password_change_token" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status400BadRequest,
+                    "Used password change token",
+                    result.Error.Description)),
+
+            "auth.invalid_email_change_token" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status400BadRequest,
+                    "Invalid email change token",
+                    result.Error.Description)),
+
+            "auth.expired_email_change_token" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status400BadRequest,
+                    "Expired email change token",
+                    result.Error.Description)),
+
+            "auth.used_email_change_token" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status400BadRequest,
+                    "Used email change token",
+                    result.Error.Description)),
+
+            "auth.email_already_in_use" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status409Conflict,
+                    "Conflict",
                     result.Error.Description)),
             
             "auth.invalid_email_verification_token" => httpContext.ToProblemResult(
