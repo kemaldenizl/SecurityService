@@ -1,8 +1,8 @@
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Security.Application.Abstractions.Auditing;
-using Security.Application.Abstractions.Email;
+using Security.Application.Abstractions.Messaging;
+using Security.Application.Abstractions.Messaging.IntegrationEvents;
 using Security.Application.Abstractions.Persistence;
 using Security.Application.Abstractions.Security;
 using Security.Application.Abstractions.Time;
@@ -24,12 +24,11 @@ public sealed class ConfirmEmailChangeCommandHandler(
     IAuditLogFactory auditLogFactory,
     IEmailChangeTokenGenerator emailChangeTokenGenerator,
     IEmailVerificationTokenGenerator emailVerificationTokenGenerator,
-    IEmailSender emailSender,
+    IEventPublisher eventPublisher,
     IAccessTokenRevocationStore accessTokenRevocationStore,
     IDateTimeProvider dateTimeProvider,
     IUnitOfWork unitOfWork,
-    IOptions<SecurityTokenInvalidationOptions> invalidationOptions,
-    ILogger<ConfirmEmailChangeCommandHandler> logger)
+    IOptions<SecurityTokenInvalidationOptions> invalidationOptions)
     : IRequestHandler<ConfirmEmailChangeCommand, Result>
 {
     private static readonly TimeSpan VerificationTokenLifetime = TimeSpan.FromHours(24);
@@ -116,22 +115,16 @@ public sealed class ConfirmEmailChangeCommandHandler(
             user.Id);
 
         await auditLogRepository.AddAsync(auditLog, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        try
-        {
-            await emailSender.SendEmailVerificationAsync(
+        await eventPublisher.PublishAsync(
+            new EmailVerificationRequestedIntegrationEvent(
+                user.Id,
                 user.Email,
                 verificationTokenPair.PlainTextToken,
-                cancellationToken);
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(
-                exception,
-                "Email verification mail could not be sent after email change. UserId: {UserId}",
-                user.Id);
-        }
+                utcNow),
+            cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }

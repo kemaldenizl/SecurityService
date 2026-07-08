@@ -1,7 +1,7 @@
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Security.Application.Abstractions.Auditing;
-using Security.Application.Abstractions.Email;
+using Security.Application.Abstractions.Messaging;
+using Security.Application.Abstractions.Messaging.IntegrationEvents;
 using Security.Application.Abstractions.Persistence;
 using Security.Application.Abstractions.Security;
 using Security.Application.Abstractions.Time;
@@ -22,10 +22,9 @@ public sealed class RequestPasswordChangeCommandHandler(
     IAuditLogFactory auditLogFactory,
     IPasswordChangeTokenGenerator passwordChangeTokenGenerator,
     IPasswordHasher passwordHasher,
-    IEmailSender emailSender,
+    IEventPublisher eventPublisher,
     IDateTimeProvider dateTimeProvider,
-    IUnitOfWork unitOfWork,
-    ILogger<RequestPasswordChangeCommandHandler> logger)
+    IUnitOfWork unitOfWork)
     : IRequestHandler<RequestPasswordChangeCommand, Result<RequestPasswordChangeResponse>>
 {
     private static readonly TimeSpan PasswordChangeTokenLifetime = TimeSpan.FromMinutes(30);
@@ -67,24 +66,16 @@ public sealed class RequestPasswordChangeCommandHandler(
             user.Id);
 
         await auditLogRepository.AddAsync(auditLog, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        try
-        {
-            await emailSender.SendPasswordChangeAsync(
+        await eventPublisher.PublishAsync(
+            new PasswordChangeRequestedIntegrationEvent(
+                user.Id,
                 user.Email,
                 tokenPair.PlainTextToken,
-                cancellationToken
-            );
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(
-                exception,
-                "Password change email could not be sent. UserId: {UserId}",
-                user.Id
-            );
-        }
+                utcNow),
+            cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result<RequestPasswordChangeResponse>.Success(new RequestPasswordChangeResponse("A confirmation link has been sent to your email address."));
     }

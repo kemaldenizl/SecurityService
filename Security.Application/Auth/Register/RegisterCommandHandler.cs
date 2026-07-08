@@ -1,7 +1,7 @@
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Security.Application.Abstractions.Auditing;
-using Security.Application.Abstractions.Email;
+using Security.Application.Abstractions.Messaging;
+using Security.Application.Abstractions.Messaging.IntegrationEvents;
 using Security.Application.Abstractions.Persistence;
 using Security.Application.Abstractions.Security;
 using Security.Application.Abstractions.Time;
@@ -23,10 +23,9 @@ public sealed class RegisterCommandHandler(
     IAuditLogFactory auditLogFactory,
     IPasswordHasher passwordHasher,
     IEmailVerificationTokenGenerator emailVerificationTokenGenerator,
-    IEmailSender emailSender,
+    IEventPublisher eventPublisher,
     IDateTimeProvider dateTimeProvider,
-    IUnitOfWork unitOfWork,
-    ILogger<RegisterCommandHandler> logger)
+    IUnitOfWork unitOfWork)
     : IRequestHandler<RegisterCommand, Result<RegisterResponse>>
 {
     private static readonly TimeSpan VerificationTokenLifetime = TimeSpan.FromHours(24);
@@ -88,31 +87,16 @@ public sealed class RegisterCommandHandler(
             user.Id);
 
         await auditLogRepository.AddAsync(verificationAuditLog, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        try
-        {
-            logger.LogInformation(
-                "Sending email verification mail to user. UserId: {UserId}, Email: {Email}",
+        await eventPublisher.PublishAsync(
+            new EmailVerificationRequestedIntegrationEvent(
                 user.Id,
-                user.Email);
-
-            logger.LogInformation(
-                "Email verification token: {Token}",
-                tokenPair.PlainTextToken);
-                
-            await emailSender.SendEmailVerificationAsync(
                 user.Email,
                 tokenPair.PlainTextToken,
-                cancellationToken);
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(
-                exception,
-                "Email verification mail could not be sent after registration. UserId: {UserId}",
-                user.Id);
-        }
+                utcNow),
+            cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var response = new RegisterResponse(new UserDto(user.Id, user.Email, user.EmailVerified, user.IsActive));
         return Result<RegisterResponse>.Success(response);
