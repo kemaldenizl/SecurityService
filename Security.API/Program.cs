@@ -112,6 +112,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthorization();
 
 app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
@@ -149,6 +150,7 @@ app.MapTestEndpoints();
 app.MapMfaEndpoints();
 app.MapRoleEndpoints();
 app.MapPermissionEndpoints();
+app.MapTenantEndpoints();
 
 app.Run();
 

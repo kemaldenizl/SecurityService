@@ -425,6 +425,18 @@ public static class ApplicationResultMapper
                     "Conflict",
                     result.Error.Description)),
 
+            "tenant.not_found" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status404NotFound,
+                    "Tenant not found",
+                    result.Error.Description)),
+
+            "tenant.slug_already_exists" => httpContext.ToProblemResult(
+                httpContext.CreateProblemDetails(
+                    StatusCodes.Status409Conflict,
+                    "Conflict",
+                    result.Error.Description)),
+
             _ => httpContext.ToProblemResult(
                 httpContext.CreateProblemDetails(
                     StatusCodes.Status400BadRequest,
