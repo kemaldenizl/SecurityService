@@ -424,6 +424,9 @@ namespace Security.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("UserAgent")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -434,14 +437,14 @@ namespace Security.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAtUtc")
-                        .HasDatabaseName("ix_audit_logs_created_at_utc");
+                    b.HasIndex("TenantId", "CreatedAtUtc")
+                        .HasDatabaseName("ix_audit_logs_tenant_id_created_at_utc");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_audit_logs_user_id");
+                    b.HasIndex("TenantId", "UserId")
+                        .HasDatabaseName("ix_audit_logs_tenant_id_user_id");
 
-                    b.HasIndex("UserId", "CreatedAtUtc")
-                        .HasDatabaseName("ix_audit_logs_user_id_created_at_utc");
+                    b.HasIndex("TenantId", "UserId", "CreatedAtUtc")
+                        .HasDatabaseName("ix_audit_logs_tenant_id_user_id_created_at_utc");
 
                     b.ToTable("audit_logs", "security");
                 });
@@ -480,11 +483,14 @@ namespace Security.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("NormalizedName")
+                    b.HasIndex("TenantId", "NormalizedName")
                         .IsUnique()
-                        .HasDatabaseName("ix_roles_normalized_name");
+                        .HasDatabaseName("ix_roles_tenant_id_normalized_name");
 
                     b.ToTable("roles", "security");
                 });
@@ -499,6 +505,9 @@ namespace Security.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("AssignedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("RoleId", "PermissionId");
 
@@ -534,6 +543,9 @@ namespace Security.Infrastructure.Persistence.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
@@ -566,6 +578,9 @@ namespace Security.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("MfaMethodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("Used")
@@ -609,16 +624,19 @@ namespace Security.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("RevokedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_refresh_sessions_user_id");
+                    b.HasIndex("TenantId", "UserId")
+                        .HasDatabaseName("ix_refresh_sessions_tenant_id_user_id");
 
-                    b.HasIndex("UserId", "Revoked")
-                        .HasDatabaseName("ix_refresh_sessions_user_id_revoked");
+                    b.HasIndex("TenantId", "UserId", "Revoked")
+                        .HasDatabaseName("ix_refresh_sessions_tenant_id_user_id_revoked");
 
                     b.ToTable("refresh_sessions", "security");
                 });
@@ -646,6 +664,9 @@ namespace Security.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("SessionId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("TokenHash")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -669,6 +690,36 @@ namespace Security.Infrastructure.Persistence.Migrations
                     b.ToTable("refresh_tokens", "security");
                 });
 
+            modelBuilder.Entity("Security.Domain.Tenancy.Tenant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tenants_slug");
+
+                    b.ToTable("tenants", "security");
+                });
+
             modelBuilder.Entity("Security.Domain.Tokens.EmailChangeToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -679,6 +730,9 @@ namespace Security.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("ExpiresAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
@@ -703,8 +757,8 @@ namespace Security.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_email_change_tokens_token_hash");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_email_change_tokens_user_id");
+                    b.HasIndex("TenantId", "UserId")
+                        .HasDatabaseName("ix_email_change_tokens_tenant_id_user_id");
 
                     b.ToTable("email_change_tokens", "security");
                 });
@@ -719,6 +773,9 @@ namespace Security.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("ExpiresAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
@@ -743,8 +800,8 @@ namespace Security.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_email_verification_tokens_token_hash");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_email_verification_tokens_user_id");
+                    b.HasIndex("TenantId", "UserId")
+                        .HasDatabaseName("ix_email_verification_tokens_tenant_id_user_id");
 
                     b.ToTable("email_verification_tokens", "security");
                 });
@@ -759,6 +816,9 @@ namespace Security.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("ExpiresAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
@@ -783,8 +843,8 @@ namespace Security.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_password_change_tokens_token_hash");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_password_change_tokens_user_id");
+                    b.HasIndex("TenantId", "UserId")
+                        .HasDatabaseName("ix_password_change_tokens_tenant_id_user_id");
 
                     b.ToTable("password_change_tokens", "security");
                 });
@@ -799,6 +859,9 @@ namespace Security.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("ExpiresAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
@@ -823,8 +886,8 @@ namespace Security.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_password_reset_tokens_token_hash");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_password_reset_tokens_user_id");
+                    b.HasIndex("TenantId", "UserId")
+                        .HasDatabaseName("ix_password_reset_tokens_tenant_id_user_id");
 
                     b.ToTable("password_reset_tokens", "security");
                 });
@@ -861,11 +924,14 @@ namespace Security.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("NormalizedEmail")
+                    b.HasIndex("TenantId", "NormalizedEmail")
                         .IsUnique()
-                        .HasDatabaseName("ix_users_normalized_email");
+                        .HasDatabaseName("ix_users_tenant_id_normalized_email");
 
                     b.ToTable("users", "security");
                 });
@@ -880,6 +946,9 @@ namespace Security.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("AssignedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("UserId", "RoleId");
 

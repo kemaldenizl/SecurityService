@@ -12,6 +12,8 @@ public sealed class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
 
         builder.HasKey(x => new { x.UserId, x.RoleId });
 
+        builder.HasTenantId();
+
         builder.Property(x => x.AssignedAtUtc)
             .IsRequired();
 

@@ -15,6 +15,8 @@ public sealed class EmailVerificationTokenConfiguration : IEntityTypeConfigurati
         builder.Property(x => x.Id)
             .ValueGeneratedNever();
 
+        builder.HasTenantId();
+
         builder.Property(x => x.UserId)
             .IsRequired();
 
@@ -37,8 +39,8 @@ public sealed class EmailVerificationTokenConfiguration : IEntityTypeConfigurati
             .IsUnique()
             .HasDatabaseName("ix_email_verification_tokens_token_hash");
 
-        builder.HasIndex(x => x.UserId)
-            .HasDatabaseName("ix_email_verification_tokens_user_id");
+        builder.HasIndex(x => new { x.TenantId, x.UserId })
+            .HasDatabaseName("ix_email_verification_tokens_tenant_id_user_id");
 
         builder.HasIndex(x => x.ExpiresAtUtc)
             .HasDatabaseName("ix_email_verification_tokens_expires_at_utc");

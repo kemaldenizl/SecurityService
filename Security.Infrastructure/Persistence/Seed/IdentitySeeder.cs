@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Security.Domain.Authorization;
+using Security.Domain.Tenancy;
 using Security.Domain.Users;
 using Security.Infrastructure.Security;
+using Security.Infrastructure.Tenancy;
 using Microsoft.Extensions.Hosting;
 
 namespace Security.Infrastructure.Persistence.Seed;
@@ -12,11 +14,13 @@ public sealed class IdentitySeeder(
     SecurityDbContext dbContext,
     PasswordHasher passwordHasher,
     IOptions<IdentitySeedOptions> options,
+    IOptions<MultiTenancyOptions> multiTenancyOptions,
     IHostEnvironment hostEnvironment,
     ILogger<IdentitySeeder> logger
 )
 {
     private readonly IdentitySeedOptions _options = options.Value;
+    private readonly MultiTenancyOptions _multiTenancyOptions = multiTenancyOptions.Value;
     private readonly IHostEnvironment _hostEnvironment = hostEnvironment;
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
@@ -33,9 +37,28 @@ public sealed class IdentitySeeder(
             return;
         }
 
+        await SeedDefaultTenantAsync(cancellationToken);
         await SeedPermissionsAsync(cancellationToken);
         await SeedRolesAsync(cancellationToken);
         await SeedAdminUserAsync(cancellationToken);
+    }
+
+    private async Task SeedDefaultTenantAsync(CancellationToken cancellationToken)
+    {
+        var defaultTenantId = _multiTenancyOptions.DefaultTenantId == Guid.Empty
+            ? MultiTenancyOptions.DefaultTenantIdValue
+            : _multiTenancyOptions.DefaultTenantId;
+
+        var exists = await dbContext.Tenants
+            .AnyAsync(x => x.Id == defaultTenantId, cancellationToken);
+
+        if (exists)
+            return;
+
+        var tenant = new Tenant(defaultTenantId, "Default", "default", DateTime.UtcNow);
+
+        await dbContext.Tenants.AddAsync(tenant, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private async Task SeedPermissionsAsync(CancellationToken cancellationToken)
@@ -49,7 +72,9 @@ public sealed class IdentitySeeder(
             PermissionCodes.PermissionsRead,
             PermissionCodes.PermissionsManage,
             PermissionCodes.SessionsRead,
-            PermissionCodes.SessionsManage
+            PermissionCodes.SessionsManage,
+            PermissionCodes.TenantsRead,
+            PermissionCodes.TenantsManage
         };
 
         var existingCodes = await dbContext.Permissions

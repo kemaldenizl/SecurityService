@@ -3,11 +3,12 @@ using Security.Domain.Common;
 
 namespace Security.Domain.Authorization;
 
-public sealed class Role : AggregateRoot
+public sealed class Role : AggregateRoot, ITenantScoped
 {
     private readonly List<RolePermission> _permissions = [];
 
     public Guid Id { get; private set; }
+    public Guid TenantId { get; private set; }
     public string Name { get; private set; } = default!;
     public string NormalizedName { get; private set; } = default!;
 

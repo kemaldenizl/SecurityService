@@ -12,6 +12,8 @@ public sealed class RolePermissionConfiguration : IEntityTypeConfiguration<RoleP
 
         builder.HasKey(x => new { x.RoleId, x.PermissionId });
 
+        builder.HasTenantId();
+
         builder.Property(x => x.AssignedAtUtc)
             .IsRequired();
 

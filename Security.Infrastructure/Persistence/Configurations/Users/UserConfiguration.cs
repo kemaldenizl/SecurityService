@@ -15,6 +15,8 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.Id)
             .ValueGeneratedNever();
 
+        builder.HasTenantId();
+
         builder.Property(x => x.Email)
             .HasMaxLength(320)
             .IsRequired();
@@ -38,9 +40,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(x => x.LastLoginAtUtc);
 
-        builder.HasIndex(x => x.NormalizedEmail)
+        builder.HasIndex(x => new { x.TenantId, x.NormalizedEmail })
             .IsUnique()
-            .HasDatabaseName("ix_users_normalized_email");
+            .HasDatabaseName("ix_users_tenant_id_normalized_email");
 
         builder.Ignore(x => x.DomainEvents);
 

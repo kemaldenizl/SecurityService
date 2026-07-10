@@ -1,9 +1,11 @@
+using Security.Domain.Abstractions;
 using Security.Domain.Common;
 
 namespace Security.Domain.Sessions;
 
-public sealed class RefreshToken
+public sealed class RefreshToken : ITenantScoped
 {
+    public Guid TenantId { get; private set; }
     public Guid Id { get; private set; }
     public Guid SessionId { get; private set; }
     public string TokenHash { get; private set; } = default!;

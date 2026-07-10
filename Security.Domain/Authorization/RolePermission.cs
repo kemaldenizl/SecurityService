@@ -1,9 +1,11 @@
+using Security.Domain.Abstractions;
 using Security.Domain.Common;
 
 namespace Security.Domain.Authorization;
 
-public sealed class RolePermission
+public sealed class RolePermission : ITenantScoped
 {
+    public Guid TenantId { get; private set; }
     public Guid RoleId { get; private set; }
     public Guid PermissionId { get; private set; }
     public DateTime AssignedAtUtc { get; private set; }
