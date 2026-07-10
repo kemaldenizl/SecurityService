@@ -3,11 +3,12 @@ using Security.Domain.Common;
 
 namespace Security.Domain.Users;
 
-public sealed class User : AggregateRoot
+public sealed class User : AggregateRoot, ITenantScoped
 {
     private readonly List<UserRole> _roles = [];
 
     public Guid Id { get; private set; }
+    public Guid TenantId { get; private set; }
     public string Email { get; private set; } = default!;
     public string NormalizedEmail { get; private set; } = default!;
     public string PasswordHash { get; private set; } = default!;
