@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Security.Infrastructure.Tenancy;
 
 namespace Security.Infrastructure.Persistence.DesignTime;
 
@@ -25,6 +28,11 @@ public sealed class SecurityDbContextFactory : IDesignTimeDbContextFactory<Secur
             npgsql.MigrationsHistoryTable("__ef_migrations_history", "security");
         });
 
-        return new SecurityDbContext(builder.Options);
+        builder.ConfigureWarnings(warnings =>
+            warnings.Ignore(CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning));
+
+        var tenantContext = new TenantContext(Options.Create(new MultiTenancyOptions()));
+
+        return new SecurityDbContext(builder.Options, tenantContext);
     }
 }

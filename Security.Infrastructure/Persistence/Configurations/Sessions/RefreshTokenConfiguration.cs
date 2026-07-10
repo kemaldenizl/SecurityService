@@ -15,6 +15,8 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
         builder.Property(x => x.Id)
             .ValueGeneratedNever();
 
+        builder.HasTenantId();
+
         builder.Property(x => x.SessionId)
             .IsRequired();
 

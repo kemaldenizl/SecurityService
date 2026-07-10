@@ -15,6 +15,8 @@ public sealed class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
         builder.Property(x => x.Id)
             .ValueGeneratedNever();
 
+        builder.HasTenantId();
+
         builder.Property(x => x.UserId);
 
         builder.Property(x => x.ActionType)
@@ -40,13 +42,13 @@ public sealed class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
         builder.Property(x => x.CreatedAtUtc)
             .IsRequired();
 
-        builder.HasIndex(x => x.UserId)
-            .HasDatabaseName("ix_audit_logs_user_id");
+        builder.HasIndex(x => new { x.TenantId, x.UserId })
+            .HasDatabaseName("ix_audit_logs_tenant_id_user_id");
 
-        builder.HasIndex(x => x.CreatedAtUtc)
-            .HasDatabaseName("ix_audit_logs_created_at_utc");
+        builder.HasIndex(x => new { x.TenantId, x.CreatedAtUtc })
+            .HasDatabaseName("ix_audit_logs_tenant_id_created_at_utc");
 
-        builder.HasIndex(x => new { x.UserId, x.CreatedAtUtc })
-            .HasDatabaseName("ix_audit_logs_user_id_created_at_utc");
+        builder.HasIndex(x => new { x.TenantId, x.UserId, x.CreatedAtUtc })
+            .HasDatabaseName("ix_audit_logs_tenant_id_user_id_created_at_utc");
     }
 }

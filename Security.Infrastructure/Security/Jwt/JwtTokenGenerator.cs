@@ -15,6 +15,7 @@ public sealed class JwtTokenGenerator(IOptions<JwtOptions> options) : ITokenGene
 
     public Task<AccessTokenDto> GenerateAccessTokenAsync(
         Guid userId,
+        Guid tenantId,
         string email,
         IReadOnlyCollection<string> permissions,
         Guid? sessionId = null,
@@ -28,6 +29,7 @@ public sealed class JwtTokenGenerator(IOptions<JwtOptions> options) : ITokenGene
         var claims = new List<Claim>
         {
             new(CustomClaimTypes.Subject, userId.ToString()),
+            new(CustomClaimTypes.TenantId, tenantId.ToString()),
             new(CustomClaimTypes.Email, email),
             new(CustomClaimTypes.JwtId, Guid.NewGuid().ToString("N")),
             new(CustomClaimTypes.IssuedAt, new DateTimeOffset(now).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)

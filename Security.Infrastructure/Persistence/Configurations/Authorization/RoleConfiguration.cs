@@ -15,6 +15,8 @@ public sealed class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.Property(x => x.Id)
             .ValueGeneratedNever();
 
+        builder.HasTenantId();
+
         builder.Property(x => x.Name)
             .HasMaxLength(200)
             .IsRequired();
@@ -23,9 +25,9 @@ public sealed class RoleConfiguration : IEntityTypeConfiguration<Role>
             .HasMaxLength(200)
             .IsRequired();
 
-        builder.HasIndex(x => x.NormalizedName)
+        builder.HasIndex(x => new { x.TenantId, x.NormalizedName })
             .IsUnique()
-            .HasDatabaseName("ix_roles_normalized_name");
+            .HasDatabaseName("ix_roles_tenant_id_normalized_name");
 
         builder.Ignore(x => x.DomainEvents);
 

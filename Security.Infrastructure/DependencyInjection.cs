@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -29,6 +30,8 @@ using Microsoft.AspNetCore.Mvc;
 using MassTransit;
 using Security.Application.Abstractions.Messaging;
 using Security.Infrastructure.Messaging;
+using Security.Application.Abstractions.Tenancy;
+using Security.Infrastructure.Tenancy;
 
 namespace Security.Infrastructure;
 
@@ -40,7 +43,11 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("Postgres") ?? throw new InvalidOperationException("Connection string 'Postgres' was not found.");
 
-        services.AddDbContext<SecurityDbContext>(options =>
+        services.Configure<MultiTenancyOptions>(configuration.GetSection(MultiTenancyOptions.SectionName));
+        services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<TenantSaveChangesInterceptor>();
+
+        services.AddDbContext<SecurityDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(connectionString, npgsql =>
             {
@@ -48,6 +55,14 @@ public static class DependencyInjection
             });
 
             options.UseOpenIddict();
+
+            // Tenant isolation: stamp TenantId on inserts and block cross-tenant writes.
+            options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
+
+            // Both ends of tenant-scoped required relationships share the same tenant filter,
+            // so the required-navigation/query-filter interaction is intentional and safe.
+            options.ConfigureWarnings(warnings =>
+                warnings.Ignore(CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning));
         });
 
         services.AddStackExchangeRedisCache(options =>
@@ -112,6 +127,16 @@ public static class DependencyInjection
                         if (!Guid.TryParse(sub, out var userId))
                         {
                             context.Fail("Token does not contain a valid subject.");
+                            return;
+                        }
+
+                        var multiTenancyOptions = context.HttpContext.RequestServices
+                            .GetRequiredService<IOptions<MultiTenancyOptions>>().Value;
+
+                        if (multiTenancyOptions.Enabled &&
+                            !Guid.TryParse(principal.FindFirst(CustomClaimTypes.TenantId)?.Value, out _))
+                        {
+                            context.Fail("Token does not contain a valid tenant.");
                             return;
                         }
 
@@ -229,10 +254,17 @@ public static class DependencyInjection
 
             options.AddPolicy(PermissionCodes.SessionsManage, policy =>
                 policy.Requirements.Add(new PermissionRequirement(PermissionCodes.SessionsManage)));
+
+            options.AddPolicy(PermissionCodes.TenantsRead, policy =>
+                policy.Requirements.Add(new PermissionRequirement(PermissionCodes.TenantsRead)));
+
+            options.AddPolicy(PermissionCodes.TenantsManage, policy =>
+                policy.Requirements.Add(new PermissionRequirement(PermissionCodes.TenantsManage)));
         });
 
         services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
+        services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
