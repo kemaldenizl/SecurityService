@@ -3,6 +3,7 @@ using Security.Application.Abstractions.Authentication;
 using Security.Application.Abstractions.Auditing;
 using Security.Application.Abstractions.Persistence;
 using Security.Application.Abstractions.Security;
+using Security.Application.Abstractions.Tenancy;
 using Security.Application.Abstractions.Time;
 using Security.Application.Abstractions.UnitOfWork;
 using Security.Application.Auth.Dtos;
@@ -25,6 +26,7 @@ public sealed class CompleteMfaLoginCommandHandler(
     IRecoveryCodeService recoveryCodeService,
     IMfaChallengeTokenService mfaChallengeTokenService,
     IRoleRepository roleRepository,
+    ITenantContext tenantContext,
     IDateTimeProvider dateTimeProvider,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CompleteMfaLoginCommand, Result<LoginResponse>>
@@ -82,6 +84,7 @@ public sealed class CompleteMfaLoginCommandHandler(
 
         var accessToken = await tokenGenerator.GenerateAccessTokenAsync(
             user.Id,
+            tenantContext.TenantId,
             user.Email,
             permissions,
             session.Id,

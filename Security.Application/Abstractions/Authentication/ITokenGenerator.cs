@@ -6,6 +6,7 @@ public interface ITokenGenerator
 {
     Task<AccessTokenDto> GenerateAccessTokenAsync(
         Guid userId,
+        Guid tenantId,
         string email,
         IReadOnlyCollection<string> permissions,
         Guid? sessionId = null,

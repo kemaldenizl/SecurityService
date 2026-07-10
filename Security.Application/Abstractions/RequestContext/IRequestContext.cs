@@ -10,5 +10,6 @@ public interface IRequestContext
 
     Guid? UserId { get; }
     Guid? SessionId { get; }
+    Guid? TenantId { get; }
     string? AccessTokenJti { get; }
 }
