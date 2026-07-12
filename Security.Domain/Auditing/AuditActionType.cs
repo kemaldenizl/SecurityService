@@ -34,6 +34,5 @@ public enum AuditActionType
     PasswordChangeRequested = 30,
     PasswordChangeCompleted = 31,
     EmailChangeRequested = 32,
-    EmailChangeCompleted = 33,
-    TenantCreated = 34
+    EmailChangeCompleted = 33
 }

@@ -30,6 +30,7 @@ using Microsoft.AspNetCore.Mvc;
 using MassTransit;
 using Security.Application.Abstractions.Messaging;
 using Security.Infrastructure.Messaging;
+using Security.Infrastructure.Messaging.Consumers;
 using Security.Application.Abstractions.Tenancy;
 using Security.Infrastructure.Tenancy;
 
@@ -254,12 +255,6 @@ public static class DependencyInjection
 
             options.AddPolicy(PermissionCodes.SessionsManage, policy =>
                 policy.Requirements.Add(new PermissionRequirement(PermissionCodes.SessionsManage)));
-
-            options.AddPolicy(PermissionCodes.TenantsRead, policy =>
-                policy.Requirements.Add(new PermissionRequirement(PermissionCodes.TenantsRead)));
-
-            options.AddPolicy(PermissionCodes.TenantsManage, policy =>
-                policy.Requirements.Add(new PermissionRequirement(PermissionCodes.TenantsManage)));
         });
 
         services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
@@ -319,6 +314,11 @@ public static class DependencyInjection
                 outbox.UsePostgres();
                 outbox.UseBusOutbox();
             });
+
+            // Tenant lifecycle is owned by the Tenant microservice; we consume its events to keep a
+            // local tenant read model in sync (used to validate tenants on incoming requests).
+            x.AddConsumer<TenantCreatedConsumer>();
+            x.AddConsumer<TenantUpdatedConsumer>();
 
             x.UsingRabbitMq((context, cfg) =>
             {
