@@ -27,23 +27,6 @@ public sealed class TenantRepository(SecurityDbContext dbContext) : ITenantRepos
             .AnyAsync(x => x.Id == id && x.IsActive, cancellationToken);
     }
 
-    public async Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken = default)
-    {
-        var normalizedSlug = slug.Trim().ToLowerInvariant();
-
-        return await dbContext.Tenants
-            .AsNoTracking()
-            .AnyAsync(x => x.Slug == normalizedSlug, cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<Tenant>> ListAsync(CancellationToken cancellationToken = default)
-    {
-        return await dbContext.Tenants
-            .AsNoTracking()
-            .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
-    }
-
     public Task AddAsync(Tenant tenant, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(tenant);

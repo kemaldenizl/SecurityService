@@ -150,7 +150,6 @@ app.MapTestEndpoints();
 app.MapMfaEndpoints();
 app.MapRoleEndpoints();
 app.MapPermissionEndpoints();
-app.MapTenantEndpoints();
 
 app.Run();
 

@@ -72,9 +72,7 @@ public sealed class IdentitySeeder(
             PermissionCodes.PermissionsRead,
             PermissionCodes.PermissionsManage,
             PermissionCodes.SessionsRead,
-            PermissionCodes.SessionsManage,
-            PermissionCodes.TenantsRead,
-            PermissionCodes.TenantsManage
+            PermissionCodes.SessionsManage
         };
 
         var existingCodes = await dbContext.Permissions

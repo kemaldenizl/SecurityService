@@ -13,7 +13,4 @@ public static class PermissionCodes
 
     public const string SessionsRead = "sessions.read";
     public const string SessionsManage = "sessions.manage";
-
-    public const string TenantsRead = "tenants.read";
-    public const string TenantsManage = "tenants.manage";
 }

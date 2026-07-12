@@ -10,9 +10,5 @@ public interface ITenantRepository
 
     Task<bool> ExistsActiveAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<Tenant>> ListAsync(CancellationToken cancellationToken = default);
-
     Task AddAsync(Tenant tenant, CancellationToken cancellationToken = default);
 }
